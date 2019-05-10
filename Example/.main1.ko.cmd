@@ -1,0 +1,1 @@
+cmd_/home/romulus/Desktop/SystemProgramming/SP-SIS2/Example/main1.ko := ld -r -m elf_x86_64 -T ./scripts/module-common.lds --build-id  -o /home/romulus/Desktop/SystemProgramming/SP-SIS2/Example/main1.ko /home/romulus/Desktop/SystemProgramming/SP-SIS2/Example/main1.o /home/romulus/Desktop/SystemProgramming/SP-SIS2/Example/main1.mod.o ;  true
