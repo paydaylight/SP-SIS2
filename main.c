@@ -6,6 +6,7 @@
 #include <linux/socket.h> 
 #include <linux/ip.h> 
 #include <linux/tcp.h> 
+#include <linux/udp.h> 
 #include <linux/skbuff.h> 
 #include <linux/module.h> 
 #include <linux/moduleparam.h> 
@@ -15,42 +16,67 @@
 
 MODULE_LICENSE("GPL"); 
 
-int init_module(void) { 
-printk(KERN_INFO "Starting"); 
-struct iphdr *ip_header; // ip header struct 
-struct tcphdr *tcp_header; // tcp header struct 
-//struct udphdr *udp_header; // udp header struct 
-struct sk_buff *sock_buff; 
-
-unsigned int sport, dport; 
-
-
-// sock_buff = skb; 
-
-if (!sock_buff) 
-return NF_ACCEPT; 
-
-ip_header = (struct iphdr *)skb_network_header(sock_buff); 
-if (!ip_header) 
-return NF_ACCEPT; 
-
-
-//if TCP PACKET 
-if(ip_header->protocol==IPPROTO_TCP) 
+static int __init init(void) 
 { 
-//tcp_header = (struct tcphdr *)skb_transport_header(sock_buff); //doing the cast this way gave me the same problem 
+        struct iphdr *ip_header; // ip header struct 
+        struct tcphdr *tcp_header; // tcp header struct 
+        struct udphdr *udp_header; // udp header struct 
+        struct sk_buff *sock_buff; 
 
-tcp_header= (struct tcphdr *)((__u32 *)ip_header+ ip_header->ihl); //this fixed the problem 
+        unsigned int sport, dport; 
 
-sport = htons((unsigned short int) tcp_header->source); //sport now has the source port 
-dport = htons((unsigned short int) tcp_header->dest); //dport now has the dest port 
-printk(KERN_INFO "Source port %d", sport); 
-printk(KERN_INFO "Destination port %d", dport); 
+        printk(KERN_INFO "Starting"); 
+        
+        // sock_buff = skb; 
+        
+        sock_buff = alloc_skb(120, GFP_ATOMIC);
+
+        printk(KERN_INFO "Uhmm");
+        
+        if (!sock_buff) {
+                printk(KERN_INFO "FFS");
+                return NF_ACCEPT; 
+        }
+        
+        printk(KERN_INFO "Wait, that worked??");
+        skb_put(sock_buff, 120);
+        //memcpy(sock_buff -> data, data, 120);
+        ip_header = (struct iphdr *)skb_network_header(sock_buff); 
+        if (!ip_header) 
+                return NF_ACCEPT; 
+
+
+        //if we are working with TCP packet
+        if(ip_header->protocol==IPPROTO_TCP) { 
+                
+                tcp_header= (struct tcphdr *)((__u32 *)ip_header+ ip_header->ihl); 
+
+                sport = htons((unsigned short int) tcp_header->source); //Getting the source port from the TCP packet header
+                dport = htons((unsigned short int) tcp_header->dest); //Getting the destination port from the TCP packet header
+                printk(KERN_INFO "Source port %d", sport); 
+                printk(KERN_INFO "Destination port %d", dport); 
+        } 
+        //If we are working with the UDP one
+        if(ip_header->protocol==IPPROTO_UDP) { 
+                
+                
+                //udp_header = (struct tcphdr *)skb_transport_header(sock_buff)
+                
+                udp_header= (struct udphdr *)((__u32 *)ip_header+ ip_header->ihl); 
+
+                sport = htons((unsigned short int) udp_header->source); //Getting the source port from the TCP packet header
+                dport = htons((unsigned short int) udp_header->dest); //Getting the destination port from the TCP packet header
+                printk(KERN_INFO "Source port %d", sport); 
+                printk(KERN_INFO "Destination port %d", dport); 
+        } 
+        return 0; 
 } 
-return 0; 
-} 
 
-void cleanup_module(void) { 
-printk(KERN_INFO "Cleanup"); 
+static void __exit cleanup(void) 
+{ 
+        printk(KERN_INFO "Cleanup"); 
 }
+
+module_init(init);
+module_exit(cleanup);
 
