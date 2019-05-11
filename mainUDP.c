@@ -82,8 +82,8 @@ int send_my(struct net_device* dev, uint8_t dest_addr[ETH_ALEN], uint16_t proto)
         /* UDP header */
         struct udphdr* uh = (struct udphdr*)skb_push(skb, udp_header_len);
         uh->len = htons(udp_total_len);
-        uh->source = htons(15934);
-        uh->dest = htons(15904);
+        uh->source = htons(8080);
+        uh->dest = htons(3000);
 
         /* IP header */
         struct iphdr* iph = (struct iphdr*)skb_push(skb,ip_header_len);
